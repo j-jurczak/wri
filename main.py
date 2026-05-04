@@ -9,9 +9,9 @@ left_sensor = ColorSensor('in1')
 right_sensor = ColorSensor('in4')
 btn = Button()
 
-BASE_SPEED = -35      
-KP = 1.2              # Steering sensitivity
-BLACK_THRESHOLD = 20  
+BASE_SPEED = -20      
+KP = 0.6
+BLACK_THRESHOLD = 15
 WHITE_THRESHOLD = 70  
 
 def follow_line():
@@ -24,21 +24,21 @@ def follow_line():
         left_val = left_sensor.reflected_light_intensity
         right_val = right_sensor.reflected_light_intensity
 
-        if left_val < BLACK_THRESHOLD and right_val < BLACK_THRESHOLD:
-            drive.on(left_speed=BASE_SPEED, right_speed=BASE_SPEED)
-            continue 
+        left_black, right_black = left_val < BLACK_THRESHOLD, right_val < BLACK_THRESHOLD
 
-        error = left_val - right_val
+
         
-        adjustment = error * KP
+        if left_black and not right_black:
+            print("left")
+            drive.on(left_speed=-BASE_SPEED, right_speed=BASE_SPEED)
+        elif not left_black and right_black:
+            print("right")
+            drive.on(left_speed=BASE_SPEED, right_speed=-BASE_SPEED)
+        else:
+            print("forward")
+            drive.on(left_speed=BASE_SPEED*KP, right_speed=BASE_SPEED*KP)
+        
 
-        left_wheel_speed = BASE_SPEED - adjustment
-        right_wheel_speed = BASE_SPEED + adjustment
-
-        left_wheel_speed = max(-100, min(100, left_wheel_speed))
-        right_wheel_speed = max(-100, min(100, right_wheel_speed))
-
-        drive.on(left_speed=left_wheel_speed, right_speed=right_wheel_speed)
 
     drive.off()
     print("Program Stopped.")
