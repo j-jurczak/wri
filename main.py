@@ -18,48 +18,88 @@ LEFT_THRESHOLD_DOWN = 14
 RIGHT_THRESHOLD_DOWN = 18
 LEFT_THRESHOLD_UP = 25
 RIGHT_THRESHOLD_UP = 40
-TURNING_TIME = 1.5
+TURNING_TIME = 2
+TURN = 0.9
+HOOK_TIME = 0.5
+EXIT_COLOR = 1
+
+
+def turn_right():
+    drive.on(left_speed=BASE_SPEED, right_speed=-BASE_SPEED)
+    sleep(TURN)
+
+def turn_left():
+    drive.on(left_speed=-BASE_SPEED, right_speed=BASE_SPEED)
+    sleep(TURN)
+
+def turn_180():
+    drive.on(left_speed=-BASE_SPEED, right_speed=BASE_SPEED)
+    sleep(TURNING_TIME)
+
+def load_dziada():
+    print("podnoszenia dziada")
+    dripper.on_for_degrees(SpeedPercent(-20), 45)
+    sleep(HOOK_TIME)
+    dripper.off()
+
+def unload_dziada():
+    print("opuszczenia dziada")
+    dripper.on_for_degrees(SpeedPercent(20), 45)
+    sleep(HOOK_TIME)
+    dripper.off()
 
 def follow_line():
     print("Program Running... Press the back button to stop.")
     
     left_sensor.mode = 'COL-COLOR'
     right_sensor.mode = 'COL-COLOR'
+    loaded = False
+    after_turn = False
 
     while not btn.backspace:
         left_val = left_sensor.color
         right_val = right_sensor.color
-        #print("left_val=", left_val)
-        #print("right_val=", right_val)
-        #sleep(0.25)
-        #continue
         left_black, right_black = left_val == 1, right_val == 1
-        left_start, right_start = left_val == 3, right_val == 3
-        left_end, right_end = left_val == 4, right_val == 4
-        down = True
-        if left_start and right_start and down:
-            print("podnoszenia haka", left_val, right_val)
-            dripper.on_for_degrees(SpeedPercent(10), 10)
-            drive.on(left_speed=-BASE_SPEED, right_speed=BASE_SPEED)
-            sleep(TURNING_TIME)
-            drive.off()
-            down = False
-        elif left_end and right_end and not down:
-            print("opuszczanie haka", left_val, right_val)
-            dripper.on_for_degrees(SpeedPercent(-10), 10)
-            down = True
-        elif left_start and down or left_end and not down:
-            #print("left color")
-            drive.on(left_speed=-BASE_SPEED, right_speed=BASE_SPEED)
-        elif right_start and down or right_end and not down:
-            #print("right color")
-            drive.on(left_speed=BASE_SPEED, right_speed=-BASE_SPEED)
+        left_start, right_start = left_val == 3, right_val == 2
+        left_end, right_end = left_val == 5, right_val == 5
+        # load_dziada()
+        # sleep(3)
+        # unload_dziada()
+        print("Left_val:", left_val, ", Right_val:", right_val, ", ", loaded)
+        if left_start and right_start and not loaded:
+            print("Loaded on")
+            load_dziada()
+            loaded = True
+            after_turn = False
+            turn_180()
+        elif not after_turn and not loaded and left_start and not right_start:
+            turn_left()
+            after_turn = True
+        elif not after_turn and not loaded and right_start and not left_start:
+            turn_right()
+            after_turn = True
+        elif left_end and right_end and loaded:
+            print("Loaded on")
+            unload_dziada()
+            loaded = False
+            after_turn = False
+            drive.on(left_speed=-BASE_SPEED, right_speed=-BASE_SPEED)
+            sleep(1.5)
+            break
+        elif not after_turn and loaded and left_end and not right_end:
+            turn_left()
+            after_turn = True
+        elif not after_turn and loaded and right_end and not left_end:
+            turn_right()
+            after_turn = True
         elif left_black and not right_black:
             #print("left")
             drive.on(left_speed=-BASE_SPEED, right_speed=BASE_SPEED)
         elif not left_black and right_black:
             #print("right")
             drive.on(left_speed=BASE_SPEED, right_speed=-BASE_SPEED)
+        elif left_black and right_black:
+            turn_left()
         else:
             #print("forward")
             drive.on(left_speed=BASE_SPEED*KP, right_speed=BASE_SPEED*KP)
