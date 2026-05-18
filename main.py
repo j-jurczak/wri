@@ -44,6 +44,7 @@ def load_dziada():
 
 def unload_dziada():
     print("opuszczenia dziada")
+    drive.off()
     dripper.on_for_degrees(SpeedPercent(20), 45)
     sleep(HOOK_TIME)
     dripper.off()
@@ -55,17 +56,25 @@ def follow_line():
     right_sensor.mode = 'COL-COLOR'
     loaded = False
     after_turn = False
+    memturn = 0 # 1 - right, 2 - left
+
 
     while not btn.backspace:
+        #r,g,b = left_sensor.rgb
+        #rr,rg,rb = right_sensor.rgb
         left_val = left_sensor.color
         right_val = right_sensor.color
         left_black, right_black = left_val == 1, right_val == 1
-        left_start, right_start = left_val == 3, right_val == 2
+        left_start, right_start = left_val == 3, right_val == 3
         left_end, right_end = left_val == 5, right_val == 5
         # load_dziada()
         # sleep(3)
         # unload_dziada()
-        print("Left_val:", left_val, ", Right_val:", right_val, ", ", loaded)
+        #print("Left_val:", left_val, ", Right_val:", right_val, ", ", loaded)
+        #print("R: ", r, "\tG: ", g, "\tB: ", b)
+        #print("R: ", rr, "\tG: ", rg, "\tB: ", rb)
+        #sleep(1)
+        #continue
         if left_start and right_start and not loaded:
             print("Loaded on")
             load_dziada()
@@ -74,9 +83,11 @@ def follow_line():
             turn_180()
         elif not after_turn and not loaded and left_start and not right_start:
             turn_left()
+            memturn = 1
             after_turn = True
         elif not after_turn and not loaded and right_start and not left_start:
             turn_right()
+            memturn = 2
             after_turn = True
         elif left_end and right_end and loaded:
             print("Loaded on")
@@ -99,7 +110,13 @@ def follow_line():
             #print("right")
             drive.on(left_speed=BASE_SPEED, right_speed=-BASE_SPEED)
         elif left_black and right_black:
-            turn_left()
+            if memturn == 1:
+                turn_right()
+            elif memturn == 2:
+                turn_left()
+            
+            memturn = 0
+            drive.on(left_speed=BASE_SPEED*KP, right_speed=BASE_SPEED*KP)
         else:
             #print("forward")
             drive.on(left_speed=BASE_SPEED*KP, right_speed=BASE_SPEED*KP)
