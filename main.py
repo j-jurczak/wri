@@ -91,6 +91,9 @@ def follow_line():
             after_turn = True
         elif left_end and right_end and loaded:
             print("Loaded on")
+            drive.on(left_speed=-BASE_SPEED, right_speed=-BASE_SPEED)
+            sleep(0.6)
+            drive.off()
             unload_dziada()
             loaded = False
             after_turn = False
